@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GHG Project Financing Tool — ICLEI Beta v3</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: system-ui, -apple-system, sans-serif; color: #1a1a1a; background: #f9f9f7; min-height: 100vh; display: flex; justify-content: center; padding: 2rem 1rem; }
+  .app { background: #fff; border-radius: 16px; border: 1px solid #e5e5e0; padding: 2rem; width: 100%; max-width: 640px; height: fit-content; }
+  .screen { display: none; padding: 1.5rem 0; }
+  .screen.active { display: block; }
+  .header { display: flex; align-items: center; gap: 12px; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid #e5e5e0; }
+  .logo { width: 36px; height: 36px; background: #0F6E56; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .logo i { color: #fff; font-size: 18px; }
+  .header-text h1 { font-size: 15px; font-weight: 500; }
+  .header-text p { font-size: 12px; color: #888; }
+  .progress { display: flex; gap: 6px; margin-bottom: 1.5rem; }
+  .step-dot { height: 4px; border-radius: 2px; flex: 1; background: #e5e5e0; transition: background 0.3s; }
+  .step-dot.done { background: #0F6E56; }
+  .step-dot.active { background: #1D9E75; }
+  .section-label { font-size: 11px; font-weight: 500; color: #0F6E56; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 0.5rem; }
+  .question { font-size: 18px; font-weight: 500; margin-bottom: 1.25rem; line-height: 1.4; }
+  .hint { font-size: 12px; color: #aaa; margin-bottom: 1rem; }
+  .option-grid { display: flex; flex-direction: column; gap: 8px; margin-bottom: 1.5rem; }
+  .option-btn { background: #fff; border: 1px solid #e5e5e0; border-radius: 8px; padding: 12px 16px; text-align: left; cursor: pointer; font-size: 14px; color: #1a1a1a; transition: border-color 0.15s, background 0.15s; display: flex; align-items: center; gap: 10px; }
+  .option-btn:hover { border-color: #1D9E75; background: #E1F5EE; color: #085041; }
+  .option-btn i { font-size: 16px; color: #1D9E75; flex-shrink: 0; }
+  .option-btn.selected { border: 2px solid #0F6E56; background: #E1F5EE; color: #085041; font-weight: 500; }
+  .option-btn.selected i { color: #0F6E56; }
+  .option-btn.selected .check-icon { display: inline-block; }
+  .check-icon { display: none; margin-left: auto; color: #0F6E56; font-size: 16px; }
+  .nav-row { display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; }
+  .btn-primary { background: #0F6E56; color: #fff; border: none; border-radius: 8px; padding: 10px 20px; font-size: 14px; font-weight: 500; cursor: pointer; transition: background 0.15s, opacity 0.15s; }
+  .btn-primary:hover:not(:disabled) { background: #085041; }
+  .btn-primary:disabled { opacity: 0.35; cursor: default; }
+  .btn-ghost { background: transparent; border: 1px solid #e5e5e0; border-radius: 8px; padding: 10px 20px; font-size: 14px; color: #888; cursor: pointer; }
+  .btn-ghost:hover { border-color: #ccc; color: #1a1a1a; }
+  .disclaimer-box { background: #f9f9f7; border-radius: 12px; border: 1px solid #e5e5e0; padding: 1.25rem; font-size: 13px; line-height: 1.7; color: #666; margin-bottom: 1.25rem; }
+  .ack-row { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 1.5rem; padding: 12px; border-radius: 8px; border: 1px solid #e5e5e0; cursor: pointer; }
+  .ack-row:hover { border-color: #1D9E75; background: #E1F5EE; }
+  .ack-row input { margin-top: 2px; accent-color: #0F6E56; width: 16px; height: 16px; flex-shrink: 0; cursor: pointer; }
+  .ack-row label { font-size: 13px; color: #1a1a1a; cursor: pointer; line-height: 1.5; }
+  .results-card { background: #fff; border: 1px solid #e5e5e0; border-radius: 12px; padding: 1.25rem; margin-bottom: 1rem; }
+  .tool-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+  .tool-name { font-size: 15px; font-weight: 500; }
+  .usage-badge { font-size: 11px; padding: 3px 10px; border-radius: 12px; font-weight: 500; flex-shrink: 0; }
+  .usage-common { background: #E1F5EE; color: #085041; }
+  .usage-limited { background: #FAEEDA; color: #633806; }
+  .usage-rare { background: #FCEBEB; color: #501313; }
+  .tool-desc { font-size: 13px; color: #666; line-height: 1.6; margin-bottom: 1rem; }
+  .tool-links { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 0.75rem; }
+  .tool-link { font-size: 12px; color: #0F6E56; text-decoration: none; display: flex; align-items: center; gap: 4px; border: 1px solid #9FE1CB; border-radius: 6px; padding: 4px 10px; }
+  .tool-link:hover { background: #E1F5EE; }
+  .resources-section { border-top: 1px solid #f0f0ec; padding-top: 0.875rem; margin-top: 0.25rem; }
+  .resources-label { font-size: 10px; font-weight: 600; color: #aaa; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 0.6rem; }
+  .resource-item { display: flex; gap: 10px; padding: 8px 10px; border-radius: 8px; border: 1px solid #e5e5e0; margin-bottom: 6px; }
+  .resource-item:last-child { margin-bottom: 0; }
+  .resource-icon { color: #1D9E75; font-size: 14px; flex-shrink: 0; margin-top: 2px; }
+  .resource-body { flex: 1; min-width: 0; }
+  .resource-desc { font-size: 12px; color: #555; line-height: 1.5; margin-bottom: 4px; }
+  .resource-item.no-link .resource-desc { margin-bottom: 0; }
+  .resource-link { font-size: 11px; color: #0F6E56; text-decoration: none; display: inline-flex; align-items: center; gap: 3px; }
+  .resource-link:hover { text-decoration: underline; }
+  .summary-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 1.25rem; }
+  .summary-chip { font-size: 12px; background: #f9f9f7; border: 1px solid #e5e5e0; border-radius: 20px; padding: 4px 12px; color: #888; display: flex; align-items: center; gap: 5px; }
+  .summary-chip strong { color: #1a1a1a; font-weight: 500; }
+  .empty-state { text-align: center; padding: 2rem 1rem; color: #888; font-size: 14px; }
+  .back-link { font-size: 13px; color: #888; cursor: pointer; display: flex; align-items: center; gap: 4px; text-decoration: none; }
+  .back-link:hover { color: #1a1a1a; }
+  .beta-badge { display: inline-block; font-size: 10px; font-weight: 500; background: #FAEEDA; color: #633806; border-radius: 4px; padding: 2px 6px; margin-left: 6px; vertical-align: middle; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="header">
+    <div class="logo"><i class="ti ti-leaf"></i></div>
+    <div class="header-text">
+      <h1>GHG Project Financing Tool <span class="beta-badge">BETA</span></h1>
+      <p>Developed by ICLEI — for city &amp; county staff</p>
+    </div>
+  </div>
+
+  <!-- Screen 1: Disclaimer -->
+  <div class="screen active" id="screen-disclaimer">
+    <div class="progress"><div class="step-dot active"></div><div class="step-dot"></div><div class="step-dot"></div><div class="step-dot"></div></div>
+    <div class="section-label">Before you begin</div>
+    <p class="question">Important disclaimer</p>
+    <div class="disclaimer-box">
+      This tool is designed to provide information about public financing of GHG reduction projects. The tool is intended to be an initial planning tool. ICLEI is not a registered financial advisor. Public organizations should work with their registered financial advisors, bond counsel, and internal general counsel prior to executing any transaction.
+    </div>
+    <div class="ack-row" onclick="toggleAck()">
+      <input type="checkbox" id="ack-check" onchange="checkAck()" />
+      <label for="ack-check">I have read and understand the disclaimer above, and acknowledge that this tool is for initial planning purposes only.</label>
+    </div>
+    <div class="nav-row">
+      <span></span>
+      <button class="btn-primary" id="btn-start" disabled onclick="goTo('screen-project')">Get started <i class="ti ti-arrow-right"></i></button>
+    </div>
+  </div>
+
+  <!-- Screen 2: Project -->
+  <div class="screen" id="screen-project">
+    <div class="progress"><div class="step-dot done"></div><div class="step-dot active"></div><div class="step-dot"></div><div class="step-dot"></div></div>
+    <div class="section-label">Step 1 of 2</div>
+    <p class="question">What type of project are you planning?</p>
+    <p class="hint">Select one option below, then click Next.</p>
+    <div class="option-grid" id="project-options"></div>
+    <div class="nav-row">
+      <a class="back-link" onclick="goTo('screen-disclaimer')"><i class="ti ti-arrow-left"></i> Back</a>
+      <button class="btn-primary" id="btn-next-project" disabled onclick="goTo('screen-owner')">Next <i class="ti ti-arrow-right"></i></button>
+    </div>
+  </div>
+
+  <!-- Screen 3: Owner -->
+  <div class="screen" id="screen-owner">
+    <div class="progress"><div class="step-dot done"></div><div class="step-dot done"></div><div class="step-dot active"></div><div class="step-dot"></div></div>
+    <div class="section-label">Step 2 of 2</div>
+    <p class="question">Who owns or will own this project?</p>
+    <p class="hint">Select one option below, then click Next.</p>
+    <div class="option-grid" id="owner-options"></div>
+    <div class="nav-row">
+      <a class="back-link" onclick="goTo('screen-project')"><i class="ti ti-arrow-left"></i> Back</a>
+      <button class="btn-primary" id="btn-next-owner" disabled onclick="showResults()">View financing tools <i class="ti ti-arrow-right"></i></button>
+    </div>
+  </div>
+
+  <!-- Screen 4: Results -->
+  <div class="screen" id="screen-results">
+    <div class="progress"><div class="step-dot done"></div><div class="step-dot done"></div><div class="step-dot done"></div><div class="step-dot done"></div></div>
+    <div class="section-label">Financing options</div>
+    <p class="question">Recommended financing tools</p>
+    <div class="summary-row" id="summary-chips"></div>
+    <div id="results-list"></div>
+    <div class="nav-row" style="margin-top:1.5rem">
+      <a class="back-link" onclick="goTo('screen-owner')"><i class="ti ti-arrow-left"></i> Change selection</a>
+      <button class="btn-ghost" onclick="restart()"><i class="ti ti-refresh"></i> Start over</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// Shared resources for all Fleet Electrification rows
+const FLEET_RESOURCES = [
+  {desc:"U.S. Department of Energy's Alternative Fuels Data Center includes resources and guidance on: federal laws and incentives, tools, case studies, vehicle cost calculator and other topics such as workforce training, low emission buses.",url:"https://afdc.energy.gov/"},
+  {desc:"IREC's Charging Smart program assists local governments in identifying, setting, and meeting goals to further their community's electric vehicle readiness. The program provides free technical assistance to help local governments adopt best practice policies, practices, and incentives, and participants are provided national recognition for their efforts.",url:"https://irecusa.org/programs/charging-smart/"},
+  {desc:"Atlas Public Policy's Dashboard for Rapid Vehicle Electrification (DRVE) is an Excel-based tool that allows users to import all fleet vehicles and compare a fleet's conventional vehicles with an electric vehicle alternative. The analysis compares vehicles on a total cost of ownership basis, along with well-to-wheels emissions based on regional electrical grid characteristics.",url:"https://atlaspolicy.com/dashboard-for-rapid-vehicle-electrification-drve/"},
+  {desc:"Drive EV Fleets is an online procurement portal providing U.S. cities and other public entities access to competitively bid electric vehicles and charging infrastructure, as well as other tools and resources to educate and inform on vehicles, policy, and procurement.",url:"https://driveevfleets.org/"},
+  {desc:"EV States Clearinghouse is a National Association of State Energy Officials online repository to assist state agencies in planning and implementing EV infrastructure programs. Though oriented towards state government, local governments may find value in exploring their state's progress in implementing the National Electric Vehicle Infrastructure program and identify new opportunities for collaboration.",url:""},
+  {desc:"Electrification Coalition's Fleet Procurement Tools and Resource Hub has various resources, including decision trees to assist with electrification from planning to financing and execution. Includes guides for procurement and financing options.",url:"https://electrificationcoalition.org/resource/fleet-procurement-tools-and-resources-hub/"},
+  {desc:"The Improving Permitting and Zoning for EV Fast Charging Station is a National Association of State Energy Officials' fact sheet providing best practices for state and local policymakers to streamline the permitting process for direct current fast charging stations.",url:"https://www.naseo.org/data/sites/1/documents/publications/EV_Fact%20Sheet_v3.pdf"},
+  {desc:"The Municipal Electrification Policy Playbook by Electrification Coalition is a resource that provides examples and case studies across charging, freight, fleet, and consumer topics.",url:"https://electrificationcoalition.org/electrifying-municipalities/"},
+  {desc:"PG&E EV Savings Calculator provides a vehicle comparison tool that includes purchase pricing and performance characteristics.",url:"https://ev.pge.com/vehicles"},
+  {desc:"Sawatch Labs provides an EV Suitability Assessment tool that assesses individual vehicle driving data each day of the year—not averages—to compare the total cost of ownership between ICEs and EVs.",url:"https://sawatchlabs.com/suitability-assessment"}
+];
+
+const DATA = [
+  {project:"Car/Truck/Fleet Electrification",owner:"Municipally owned",tool:"General Fund Appropriation",usage:"Common",
+   desc:"Many municipalities allocate funds directly from their annual budgets or capital improvement plans to purchase electric vehicles and charging infrastructure. The easiest path to electrification is to adopt a replacement program, whereby as each asset (car, truck, leaf-blower, etc.) reaches the end of its useful life, an assessment is completed to determine the feasibility of purchasing an electric-powered replacement asset. In some cases, the lifecycle costs of electrification can be lower than traditional power sources, and in others, it will require incremental funding. Depending on its policy environment and financial condition, local government can adopt an EV policy that requires electrification regardless of the cost differential, with a cost differential up to a certain ceiling, or require conversion only in case that results in cost savings.",
+   cs1:"https://www.driveelectricusa.org/fleet-stories/cobb-county/",cs1label:"Cobb County Fleet Program",
+   cs2:"https://www.austintexas.gov/fleet-mobility/programs/going-electric",cs2label:"City of Austin Fleet Mobility Strategy",
+   resources:FLEET_RESOURCES},
+  {project:"Car/Truck/Fleet Electrification",owner:"Municipally owned",tool:"Revolving Loan Funds",usage:"Limited",
+   desc:"Local jurisdictions can also establish revolving loan funds (see separate ICLEI White Paper publication on Municipal Revolving Funds), low-interest financing, or dedicated electrification funds to support fleet transitions. These funds can provide internal loans or grants to departments to acquire EVs or chargers, spreading cost over time and keeping more control local. Because vehicle purchases are often funded through an individual department's budget, having an internal funding mechanism allows spreading the additional upfront cost of electric vehicles across the local government, rather than requiring individual departments to make a trade-off with immediate service delivery needs. Community-run funds can also co-fund charging infrastructure or transition studies.",
+   cs1:"",cs1label:"",cs2:"",cs2label:"",resources:FLEET_RESOURCES},
+  {project:"Car/Truck/Fleet Electrification",owner:"Municipally owned",tool:"Grant",usage:"Limited",
+   desc:"State and federal grants (e.g., Congestion Mitigation and Air Quality (CMAQ) and state electric vehicle incentives) help reduce upfront costs for fleets and chargers. Many large local governments can combine these with local funds to lower net capital needs. At times, the federal government has provided tax incentives/credits for electric vehicles. Additionally, electric utilities may offer incentives and rebate programs that assist with offsetting upfront costs and managing charging to lower on-going costs.",
+   cs1:"",cs1label:"",cs2:"",cs2label:"",resources:FLEET_RESOURCES},
+  {project:"Car/Truck/Fleet Electrification",owner:"Municipally owned",tool:"Cooperative and Aggregated Procurement",usage:"Limited",
+   desc:"Local governments can use cooperative purchasing platforms such as the Climate Mayors Electric Vehicle Purchasing Collaborative's DriveEVFleets.org procurement platform operated by Electrification Coalition and Sourcewell to leverage volume discounts, competitive pricing, and procurement efficiencies for EVs and charging equipment. This approach often reduces vehicle cost and accelerates deployment. Some local governments purchase vehicles through a group purchasing contract negotiated by their state; in this case, check what electric vehicles are available through the contract, and advocate to the state to add more.",
+   cs1:"",cs1label:"",cs2:"",cs2label:"",resources:FLEET_RESOURCES},
+  {project:"Car/Truck/Fleet Electrification",owner:"Municipally owned",tool:"New Fees",usage:"Limited",
+   desc:"Charges to city/county departments can be a source of funding. Charges based on usage.",
+   cs1:"https://www.sfmta.com/projects/all-electric-fleet-transition",cs1label:"Case Study",cs2:"",cs2label:"",resources:FLEET_RESOURCES},
+  {project:"Car/Truck/Fleet Electrification",owner:"Municipally owned",tool:"Public Private Partnership",usage:"Common",
+   desc:"Leasing electric vehicles or adopting lease-to-own structures allows local governments to avoid large initial capital outlays. These can be structured to align lease payments with expected fuel and maintenance savings. Lease structures can also be beneficial as a \"trial\" program for fleet electrification to determine which elements of electrification work or do not work for their fleet. The Climate Mayors EV Purchasing Collaborative also offers leases for local governments in the U.S., with the goals of expanding access for public fleets to electrify by providing transparent pricing and financing options. Open-ended leases are structured with the goal of the lessee keeping the vehicle at the end of the term. Leases can be more tailored to municipalities, such as including a non-appropriations clause that allows a local government to terminate a lease without penalty if funds are not allocated.",
+   cs1:"https://www.sfmta.com/projects/all-electric-fleet-transition",cs1label:"Case Study",cs2:"",cs2label:"",resources:FLEET_RESOURCES},
+  {project:"Car/Truck/Fleet Electrification",owner:"Municipally owned",tool:"Green Banks",usage:"Limited",
+   desc:"Some green banks have offered financing programs to assist local governments in purchasing electric vehicles. Green Bank of Illinois has offered a loan program for electric school buses.",
+   cs1:"",cs1label:"",cs2:"",cs2label:"",resources:FLEET_RESOURCES},
+  {project:"Car/Truck/Fleet Electrification",owner:"Homeowner/Residence",tool:"Charging Infrastructure Related Fees",usage:"Common",
+   desc:"Partnering with private developers, utilities, or service providers can help local governments deploy charging infrastructure and manage risk. Some local governments contract with a charging company to install charging infrastructure in public parking lots in exchange for the company receiving revenue when vehicles are charged. Alternatively, charging infrastructure can be incorporated into larger Energy Savings Performance Contracts (ESPCs) or Energy Service Contracts (ESAs).",
+   cs1:"",cs1label:"",cs2:"",cs2label:"",resources:FLEET_RESOURCES},
+  {project:"Car/Truck/Fleet Electrification",owner:"Commercial/Business",tool:"Charging Infrastructure Related Fees",usage:"Limited",
+   desc:"Partnering with private developers, utilities, or service providers can help local governments deploy charging infrastructure and manage risk. Some local governments contract with a charging company to install charging infrastructure in public parking lots in exchange for the company receiving revenue when vehicles are charged. Alternatively, charging infrastructure can be incorporated into larger Energy Savings Performance Contracts (ESPCs) or Energy Service Contracts (ESAs).",
+   cs1:"",cs1label:"",cs2:"",cs2label:"",resources:FLEET_RESOURCES},
+  {project:"Solar/Wind",owner:"Municipally owned",tool:"Power Purchase Agreement",usage:"Common",
+   desc:"PPAs are used in a variety of solar and wind energy procurement arrangements, allowing municipalities to procure renewable energy without owning the generation assets.",
+   cs1:"https://www.sfmta.com/projects/all-electric-fleet-transition",cs1label:"Case Study",cs2:"",cs2label:"",resources:[]},
+  {project:"Solar/Wind",owner:"Port Authority",tool:"Power Purchase Agreement",usage:"Limited",
+   desc:"PPAs can be used for port authority solar/wind installations, enabling ports to procure renewable energy through long-term contracts with private developers.",
+   cs1:"https://www.sfmta.com/projects/all-electric-fleet-transition",cs1label:"Case Study",cs2:"",cs2label:"",resources:[]},
+  {project:"Solar/Wind",owner:"Non-Profit/Community",tool:"Community Solar",usage:"Common",
+   desc:"Community solar is an excellent financing mechanism allowing non-profits and community organizations to participate in solar energy without direct ownership of infrastructure.",
+   cs1:"https://www.sfmta.com/projects/all-electric-fleet-transition",cs1label:"Case Study",cs2:"",cs2label:"",resources:[]},
+  {project:"Geothermal",owner:"Municipally owned",tool:"Power Purchase Agreement",usage:"Limited",
+   desc:"Contracts for geothermal development through public-private partnerships, allowing municipalities to procure geothermal energy without owning the generation infrastructure.",
+   cs1:"https://www.sfmta.com/projects/all-electric-fleet-transition",cs1label:"Case Study",cs2:"",cs2label:"",resources:[]},
+  {project:"Fugitive Emissions Capture",owner:"Municipally owned",tool:"Public Private Partnership",usage:"Common",
+   desc:"P3 arrangements have been used to create fugitive emissions capture projects, leveraging private sector expertise and capital to develop and operate emissions capture systems.",
+   cs1:"https://www.sfmta.com/projects/all-electric-fleet-transition",cs1label:"Case Study",cs2:"",cs2label:"",resources:[]},
+  {project:"Building Energy Efficiency",owner:"Municipally owned",tool:"Energy Efficiency Contracts",usage:"Common",
+   desc:"ESCOs, ESPCs, and Energy Service Agreements (ESAs) are the primary vehicles for financing municipal building energy efficiency upgrades, allowing improvements to be paid back through guaranteed energy savings.",
+   cs1:"https://www.sfmta.com/projects/all-electric-fleet-transition",cs1label:"Case Study",cs2:"",cs2label:"",resources:[]},
+  {project:"Building Energy Efficiency",owner:"Homeowner/Residence",tool:"R-PACE",usage:"Limited",
+   desc:"PACE programs are effective financing mechanisms for residential building energy efficiency improvements, allowing homeowners to finance upgrades through a special assessment on their property.",
+   cs1:"https://www.sfmta.com/projects/all-electric-fleet-transition",cs1label:"Case Study",cs2:"",cs2label:"",resources:[]},
+  {project:"Building Energy Efficiency",owner:"Commercial/Business",tool:"C-PACE",usage:"Limited",
+   desc:"C-PACE programs have been used widely for commercial building energy efficiency financing, enabling property owners to finance improvements through a voluntary special assessment.",
+   cs1:"https://www.sfmta.com/projects/all-electric-fleet-transition",cs1label:"Case Study",cs2:"",cs2label:"",resources:[]}
+];
+
+const projectIcons = {
+  "Car/Truck/Fleet Electrification":"ti-car",
+  "Solar/Wind":"ti-solar-panel",
+  "Geothermal":"ti-flame",
+  "Fugitive Emissions Capture":"ti-cloud",
+  "Building Energy Efficiency":"ti-building"
+};
+const ownerIcons = {
+  "Municipally owned":"ti-building-community",
+  "Homeowner/Residence":"ti-home",
+  "Commercial/Business":"ti-briefcase",
+  "Port Authority":"ti-anchor",
+  "Non-Profit/Community":"ti-users"
+};
+
+let selected = {project: null, owner: null};
+
+function getProjects() { return [...new Set(DATA.map(d => d.project))]; }
+function getOwners(p) { return [...new Set(DATA.filter(d => d.project === p).map(d => d.owner))]; }
+
+function goTo(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  if (id === 'screen-project') renderProjects();
+  if (id === 'screen-owner') renderOwners();
+}
+
+function toggleAck() {
+  const cb = document.getElementById('ack-check');
+  cb.checked = !cb.checked;
+  checkAck();
+}
+function checkAck() {
+  document.getElementById('btn-start').disabled = !document.getElementById('ack-check').checked;
+}
+
+function renderOptions(containerId, items, iconMap, currentVal, onSelect, nextBtnId) {
+  const el = document.getElementById(containerId);
+  el.innerHTML = '';
+  items.forEach(item => {
+    const icon = iconMap[item] || 'ti-circle';
+    const isSelected = currentVal === item;
+    const btn = document.createElement('button');
+    btn.className = 'option-btn' + (isSelected ? ' selected' : '');
+    btn.innerHTML = `<i class="ti ${icon}"></i><span style="flex:1">${item}</span><i class="ti ti-circle-check check-icon"></i>`;
+    btn.onclick = () => {
+      onSelect(item);
+      renderOptions(containerId, items, iconMap, item, onSelect, nextBtnId);
+      document.getElementById(nextBtnId).disabled = false;
+    };
+    el.appendChild(btn);
+  });
+}
+
+function renderProjects() {
+  renderOptions('project-options', getProjects(), projectIcons, selected.project,
+    (val) => { selected.project = val; selected.owner = null; }, 'btn-next-project');
+}
+
+function renderOwners() {
+  if (!selected.project) return;
+  renderOptions('owner-options', getOwners(selected.project), ownerIcons, selected.owner,
+    (val) => { selected.owner = val; }, 'btn-next-owner');
+  document.getElementById('btn-next-owner').disabled = selected.owner === null;
+}
+
+function showResults() {
+  goTo('screen-results');
+  const chips = document.getElementById('summary-chips');
+  chips.innerHTML = `
+    <div class="summary-chip"><i class="ti ${projectIcons[selected.project]||'ti-circle'}"></i><strong>${selected.project}</strong></div>
+    <div class="summary-chip"><i class="ti ${ownerIcons[selected.owner]||'ti-user'}"></i><strong>${selected.owner}</strong></div>
+  `;
+  const matches = DATA.filter(d => d.project === selected.project && d.owner === selected.owner);
+  const list = document.getElementById('results-list');
+  if (!matches.length) {
+    list.innerHTML = '<div class="empty-state"><i class="ti ti-search" style="font-size:24px;display:block;margin-bottom:8px"></i>No financing tools found for this combination.</div>';
+    return;
+  }
+  list.innerHTML = matches.map(m => {
+    const badgeClass = m.usage === 'Common' ? 'usage-common' : m.usage === 'Rare' ? 'usage-rare' : 'usage-limited';
+
+    const caseStudyLinks = [
+      m.cs1 ? `<a href="${m.cs1}" class="tool-link" target="_blank"><i class="ti ti-external-link"></i>${m.cs1label || 'Case Study'}</a>` : '',
+      m.cs2 ? `<a href="${m.cs2}" class="tool-link" target="_blank"><i class="ti ti-external-link"></i>${m.cs2label || 'Case Study'}</a>` : ''
+    ].filter(Boolean).join('');
+
+    const resourcesHtml = m.resources && m.resources.length
+      ? `<div class="resources-section">
+          <div class="resources-label">Resources</div>
+          ${m.resources.map(r => `
+            <div class="resource-item${r.url ? '' : ' no-link'}">
+              <i class="ti ti-book resource-icon"></i>
+              <div class="resource-body">
+                <div class="resource-desc">${r.desc}</div>
+                ${r.url ? `<a href="${r.url}" class="resource-link" target="_blank"><i class="ti ti-external-link"></i> Visit resource</a>` : ''}
+              </div>
+            </div>`).join('')}
+        </div>`
+      : '';
+
+    return `<div class="results-card">
+      <div class="tool-header">
+        <div class="tool-name">${m.tool}</div>
+        <span class="usage-badge ${badgeClass}">${m.usage}</span>
+      </div>
+      <p class="tool-desc">${m.desc}</p>
+      ${caseStudyLinks ? `<div class="tool-links">${caseStudyLinks}</div>` : ''}
+      ${resourcesHtml}
+    </div>`;
+  }).join('');
+}
+
+function restart() {
+  selected = {project: null, owner: null};
+  document.getElementById('ack-check').checked = false;
+  document.getElementById('btn-start').disabled = true;
+  document.getElementById('btn-next-project').disabled = true;
+  document.getElementById('btn-next-owner').disabled = true;
+  goTo('screen-disclaimer');
+}
+
+renderProjects();
+</script>
+</body>
+</html>
